@@ -45,11 +45,11 @@ function App() {
         <div className="trust-container">
           <p className="trust-label">Trusted by forward-thinking organisations</p>
           <div className="trust-logos">
-            <span className="trust-item">Local Government</span>
+            <span className="trust-item">Financial Services</span>
             <span className="trust-divider" />
             <span className="trust-item">Professional Services</span>
             <span className="trust-divider" />
-            <span className="trust-item">Not-for-Profit</span>
+            <span className="trust-item">Healthcare</span>
             <span className="trust-divider" />
             <span className="trust-item">Enterprise</span>
           </div>
@@ -120,7 +120,7 @@ function App() {
               </div>
               <h3>Enterprise Security</h3>
               <p>
-                Your data stays yours. Built with Azure AD integration,
+                Your data stays yours. Built with SSO integration,
                 role-based access, and audit trails by default.
               </p>
             </div>
@@ -133,8 +133,8 @@ function App() {
               </div>
               <h3>Pre-Built Connectors</h3>
               <p>
-                Connect to SQL Server, Azure DevOps, Computron, TechnologyOne,
-                and more &mdash; out of the box.
+                Connect to your databases, cloud platforms, SaaS tools,
+                and APIs &mdash; out of the box.
               </p>
             </div>
             <div className="feature-card">
@@ -198,24 +198,24 @@ function App() {
           </div>
           <div className="use-cases-grid">
             <div className="use-case-card">
-              <h3>Capital Works &amp; Portfolio Management</h3>
+              <h3>Sales &amp; Revenue Analytics</h3>
               <p>
-                Track budgets, forecasts, and actuals across your entire capital
-                program with automated RAG status and variance analysis.
+                Monitor pipeline health, forecast revenue, and identify
+                growth opportunities with AI-driven sales intelligence.
               </p>
             </div>
             <div className="use-case-card">
-              <h3>Resource Planning &amp; Capacity</h3>
+              <h3>Operations &amp; Workforce Planning</h3>
               <p>
-                Visualise team allocation, identify over-commitment, and plan
-                capacity across programs and financial years.
+                Optimise team capacity, track utilisation, and plan
+                resources across projects and business units.
               </p>
             </div>
             <div className="use-case-card">
               <h3>Executive Reporting</h3>
               <p>
-                Auto-generate board packs, monthly portfolio updates, and
-                project control board presentations &mdash; AI-assisted, human-reviewed.
+                Auto-generate board packs, performance summaries, and
+                strategic reviews &mdash; AI-assisted, human-reviewed.
               </p>
             </div>
           </div>
@@ -227,16 +227,16 @@ function App() {
         <div className="section-container">
           <div className="testimonial-card">
             <blockquote>
-              &ldquo;Agenlytics has transformed how we report on our capital works
-              program. What used to take days of manual spreadsheet work now
+              &ldquo;Agenlytics has transformed how we make decisions.
+              What used to take days of manual spreadsheet work now
               happens automatically &mdash; and the insights are better than anything
               we produced before.&rdquo;
             </blockquote>
             <div className="testimonial-author">
-              <div className="author-avatar">PM</div>
+              <div className="author-avatar">CO</div>
               <div>
-                <strong>Portfolio Manager</strong>
-                <span>Local Government Organisation</span>
+                <strong>Chief Operating Officer</strong>
+                <span>Mid-Market Enterprise</span>
               </div>
             </div>
           </div>
