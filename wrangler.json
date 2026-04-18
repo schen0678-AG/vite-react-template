@@ -11,5 +11,12 @@
 	"assets": {
 		"directory": "./dist/client",
 		"not_found_handling": "single-page-application"
-	}
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "assistant-db",
+			"database_id": "a7e31c33-af90-4e22-837e-0291ef5a01a9"
+		}
+	]
 }
