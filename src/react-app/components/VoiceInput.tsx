@@ -4,11 +4,9 @@ interface VoiceInputProps {
   onEntryCreated: () => void;
 }
 
-type Language = "en-US" | "zh-CN";
-
 export default function VoiceInput({ onEntryCreated }: VoiceInputProps) {
-  const [language, setLanguage] = useState<Language>("en-US");
-  const [isListening, setIsListening] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastFeedback, setLastFeedback] = useState<{
@@ -16,55 +14,77 @@ export default function VoiceInput({ onEntryCreated }: VoiceInputProps) {
     title: string;
     feedback: string;
   } | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-  const SpeechRecognitionAPI =
-    typeof window !== "undefined"
-      ? window.SpeechRecognition || window.webkitSpeechRecognition
-      : null;
+  const detectLanguage = (text: string): string => {
+    const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf]/;
+    return cjkRegex.test(text) ? "zh-CN" : "en-US";
+  };
 
-  const hasSpeech = !!SpeechRecognitionAPI;
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm",
+      });
 
-  const startListening = useCallback(() => {
-    if (!SpeechRecognitionAPI) return;
+      chunksRef.current = [];
 
-    const recognition = new SpeechRecognitionAPI();
-    recognition.lang = language;
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    let finalTranscript = transcript;
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscript += result[0].transcript;
-        } else {
-          interim += result[0].transcript;
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
         }
-      }
-      setTranscript(finalTranscript + interim);
-    };
+      };
 
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
+      mediaRecorder.onstop = async () => {
+        // Stop all tracks to release the microphone
+        stream.getTracks().forEach((t) => t.stop());
 
-    recognition.onend = () => {
-      setIsListening(false);
-      setTranscript(finalTranscript);
-    };
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+        if (audioBlob.size === 0) return;
 
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
-  }, [SpeechRecognitionAPI, language, transcript]);
+        // Send to Whisper for transcription
+        setIsTranscribing(true);
+        try {
+          const formData = new FormData();
+          formData.append("audio", audioBlob, "audio.webm");
 
-  const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
+          const res = await fetch("/api/transcribe", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            alert(`Transcription error: ${err.error || "Unknown"}`);
+            return;
+          }
+
+          const data = (await res.json()) as { text: string; language: string };
+          setTranscript((prev) => (prev ? prev + " " + data.text : data.text));
+        } catch {
+          alert("Failed to transcribe audio");
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch {
+      alert("Microphone access denied. Please allow microphone access.");
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
   }, []);
 
   const handleSubmit = async () => {
@@ -73,11 +93,14 @@ export default function VoiceInput({ onEntryCreated }: VoiceInputProps) {
     setIsSubmitting(true);
     setLastFeedback(null);
 
+    const text = transcript.trim();
+    const language = detectLanguage(text);
+
     try {
       const res = await fetch("/api/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: transcript.trim(), language }),
+        body: JSON.stringify({ text, language }),
       });
 
       if (!res.ok) {
@@ -101,86 +124,78 @@ export default function VoiceInput({ onEntryCreated }: VoiceInputProps) {
     }
   };
 
-  const toggleLanguage = () => {
-    setLanguage((prev) => (prev === "en-US" ? "zh-CN" : "en-US"));
-  };
+  const isBusy = isSubmitting || isTranscribing;
 
   return (
     <div className="voice-input">
       <div className="voice-input-header">
-        <h2>{language === "en-US" ? "What's on your mind?" : "\u4F60\u5728\u60F3\u4EC0\u4E48\uFF1F"}</h2>
-        <button className="lang-toggle" onClick={toggleLanguage}>
-          {language === "en-US" ? "\u4E2D\u6587" : "EN"}
-        </button>
+        <h2>What's on your mind?</h2>
       </div>
 
       <div className="voice-input-area">
         <textarea
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
-          placeholder={
-            language === "en-US"
-              ? "Tap the mic or type here..."
-              : "\u70B9\u51FB\u9EA6\u514B\u98CE\u6216\u5728\u8FD9\u91CC\u8F93\u5165..."
-          }
+          placeholder="Tap the mic or type here... (English or Chinese)"
           rows={4}
-          disabled={isSubmitting}
+          disabled={isBusy}
         />
 
         <div className="voice-input-actions">
-          {hasSpeech && (
-            <button
-              className={`mic-btn ${isListening ? "listening" : ""}`}
-              onClick={isListening ? stopListening : startListening}
-              disabled={isSubmitting}
-              title={isListening ? "Stop" : "Start listening"}
+          <button
+            className={`mic-btn ${isRecording ? "listening" : ""}`}
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={isBusy}
+            title={isRecording ? "Stop recording" : "Start recording"}
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                {isListening ? (
-                  <>
-                    <rect x="6" y="6" width="12" height="12" rx="2" />
-                  </>
-                ) : (
-                  <>
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                    <line x1="12" y1="19" x2="12" y2="23" />
-                    <line x1="8" y1="23" x2="16" y2="23" />
-                  </>
-                )}
-              </svg>
-            </button>
-          )}
+              {isRecording ? (
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              ) : (
+                <>
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </>
+              )}
+            </svg>
+          </button>
 
           <button
             className="submit-btn"
             onClick={handleSubmit}
-            disabled={!transcript.trim() || isSubmitting}
+            disabled={!transcript.trim() || isBusy}
           >
             {isSubmitting
-              ? language === "en-US"
-                ? "Thinking..."
-                : "\u601D\u8003\u4E2D..."
-              : language === "en-US"
-                ? "Send"
-                : "\u53D1\u9001"}
+              ? "Thinking..."
+              : isTranscribing
+                ? "Transcribing..."
+                : "Send"}
           </button>
         </div>
       </div>
 
-      {isListening && (
+      {isRecording && (
         <div className="listening-indicator">
           <span className="pulse" />
-          {language === "en-US" ? "Listening..." : "\u6B63\u5728\u542C..."}
+          Recording... tap stop when done
+        </div>
+      )}
+
+      {isTranscribing && (
+        <div className="listening-indicator">
+          <span className="pulse" style={{ background: "#6366f1" }} />
+          Transcribing with Whisper...
         </div>
       )}
 

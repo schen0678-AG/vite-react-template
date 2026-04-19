@@ -1,33 +1,22 @@
-import { useState } from "react";
-import VoiceInput from "./components/VoiceInput";
-import HistoryList from "./components/HistoryList";
+import { useState, useEffect } from "react";
+import LandingPage from "./components/LandingPage";
+import AssistantPage from "./components/AssistantPage";
 import "./App.css";
 
 function App() {
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [page, setPage] = useState(window.location.pathname);
 
-  const handleEntryCreated = () => {
-    setRefreshKey((k) => k + 1);
-  };
+  useEffect(() => {
+    const handleNav = () => setPage(window.location.pathname);
+    window.addEventListener("popstate", handleNav);
+    return () => window.removeEventListener("popstate", handleNav);
+  }, []);
 
-  return (
-    <div className="app">
-      <header className="app-header">
-        <div className="app-header-inner">
-          <a href="/" className="app-logo">
-            <span className="logo-icon">A</span>
-            <span className="logo-text">Agenlytics</span>
-          </a>
-          <span className="app-subtitle">Personal Assistant</span>
-        </div>
-      </header>
+  if (page === "/assistant") {
+    return <AssistantPage />;
+  }
 
-      <main className="app-main">
-        <VoiceInput onEntryCreated={handleEntryCreated} />
-        <HistoryList refreshKey={refreshKey} />
-      </main>
-    </div>
-  );
+  return <LandingPage />;
 }
 
 export default App;
