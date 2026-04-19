@@ -15,7 +15,7 @@ export default function AssistantPage() {
         <div className="app-header-inner">
           <a href="/" className="app-logo">
             <span className="logo-icon">A</span>
-            <span className="logo-text">Agenlytics</span>
+            <span className="logo-text">Agenlytics Labs</span>
           </a>
           <span className="app-subtitle">Personal Assistant</span>
           <a href="/" className="back-link">&larr; Back to home</a>
