@@ -69,6 +69,19 @@ const teams: Team[] = [
         capabilities: ["Customer purchasing pattern analysis", "At-risk account detection", "Upsell and cross-sell recommendations", "Customer lifetime value tracking"],
         status: "planned", teamId: "sales-marketing",
       },
+      {
+        id: "rex-crm", name: "Rex", emoji: "💼", title: "CRM Intelligence Agent",
+        quote: "I turn leads into revenue and keep your sales team on top.",
+        intro: "I power your native CRM from end to end — identifying and scoring incoming leads, guiding them through the sales pipeline from first contact to closed deal, and tracking every rep's performance in real time. I surface which leads are most likely to convert, flag stalled deals, and give sales managers a clear view of team activity and quota attainment.",
+        capabilities: [
+          "Lead identification and scoring from multiple sources",
+          "Automated lead-to-opportunity pipeline conversion",
+          "Deal stage tracking and stall detection",
+          "Sales rep performance dashboards and quota tracking",
+          "Win/loss analysis and pipeline health reporting",
+        ],
+        status: "active", teamId: "sales-marketing",
+      },
     ],
   },
   {
