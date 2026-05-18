@@ -10,12 +10,10 @@ export default function LandingPage() {
             <span className="logo-text">Agenlytics Labs</span>
           </a>
           <div className="nav-links">
-            <a href="#platform">Platform</a>
-            <a href="/agents">Agents</a>
-            <a href="#use-cases">Use Cases</a>
-            <a href="#contact">Contact</a>
-            <a href="/crm">Voice CRM</a>
-            <a href="/assistant" className="nav-cta">Try Assistant</a>
+            <a href="#platform">Data &amp; Agent Fusion Platform</a>
+            <a href="/agents">Meet the Agent Team</a>
+            <a href="/crm">Try Voice CRM</a>
+            <a href="/assistant" className="nav-cta">Try Personal Assistant</a>
           </div>
         </div>
       </nav>
