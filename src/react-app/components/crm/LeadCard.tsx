@@ -5,6 +5,7 @@ interface LeadCardProps {
   lead: Lead;
   onDelete: (id: number) => void;
   onStatusChange: (id: number, status: LeadStatus) => void;
+  onConvert?: (lead: Lead) => void;
 }
 
 const statusMeta = (s: LeadStatus) =>
@@ -31,7 +32,7 @@ const formatDate = (s: string, lang: string): string => {
   });
 };
 
-export default function LeadCard({ lead, onDelete, onStatusChange }: LeadCardProps) {
+export default function LeadCard({ lead, onDelete, onStatusChange, onConvert }: LeadCardProps) {
   const meta = statusMeta(lead.status);
   const value = formatValue(lead.estimated_value, lead.language);
 
@@ -118,6 +119,27 @@ export default function LeadCard({ lead, onDelete, onStatusChange }: LeadCardPro
       )}
 
       {lead.summary && <p className="entry-feedback">{lead.summary}</p>}
+
+      {onConvert && lead.status !== "Converted" && (
+        <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            onClick={() => onConvert(lead)}
+            style={{
+              padding: "6px 12px",
+              background: "var(--accent-light)",
+              color: "var(--accent)",
+              border: "1px solid var(--accent)",
+              borderRadius: 999,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            Convert to Deal →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

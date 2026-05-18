@@ -26,6 +26,10 @@ function App() {
     return <CRMPage />;
   }
 
+  if (page === "/dashboard") {
+    return <CRMPage initialTab="dashboard" />;
+  }
+
   return <LandingPage />;
 }
 

@@ -5,9 +5,10 @@ import LeadCard from "./LeadCard";
 
 interface LeadListProps {
   refreshKey: number;
+  onConvert?: (lead: Lead) => void;
 }
 
-export default function LeadList({ refreshKey }: LeadListProps) {
+export default function LeadList({ refreshKey, onConvert }: LeadListProps) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
   const [loading, setLoading] = useState(true);
@@ -94,6 +95,7 @@ export default function LeadList({ refreshKey }: LeadListProps) {
               lead={lead}
               onDelete={handleDelete}
               onStatusChange={handleStatusChange}
+              onConvert={onConvert}
             />
           ))
         )}
