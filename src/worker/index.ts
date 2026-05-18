@@ -160,4 +160,119 @@ app.delete("/api/entries/:id", async (c) => {
   return c.json({ ok: true });
 });
 
+/* ── CRM: Leads ──────────────────────────────────────────── */
+
+// Create a new lead: voice/text transcript → Claude extracts fields → save to D1
+app.post("/api/leads", async (c) => {
+  const { text, language } = await c.req.json<{
+    text: string;
+    language?: string;
+  }>();
+
+  if (!text?.trim()) {
+    return c.json({ error: "Text is required" }, 400);
+  }
+
+  const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY });
+
+  const systemPrompt = `You parse spoken/typed input describing a new sales lead into a structured JSON record.
+
+Return ONLY valid JSON, no other text.
+Format: {"name": "...", "company": "...", "title": "...", "phone": "...", "email": "...", "product_interest": "...", "estimated_value": null_or_number, "summary": "..."}
+
+Rules:
+1. "name" is REQUIRED — if you cannot extract a person's name from the input, return {"error": "No lead name detected"} instead.
+2. All other string fields default to "" if not mentioned.
+3. "estimated_value" is a number in the smallest currency unit mentioned (strip $ / AUD / 万 etc.), or null if not stated. Example: "around 50k" → 50000.
+4. "summary" is a 1–2 sentence acknowledgement of the captured lead, in the SAME language as the input (Chinese input → Simplified Chinese, English input → English). Always Simplified Chinese, never Traditional.`;
+
+  try {
+    const message = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 500,
+      system: systemPrompt,
+      messages: [{ role: "user", content: text }],
+    });
+
+    const responseText =
+      message.content[0].type === "text" ? message.content[0].text : "";
+
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return c.json({ error: "Failed to parse AI response" }, 500);
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (parsed.error) {
+      return c.json({ error: parsed.error }, 400);
+    }
+    if (!parsed.name?.trim()) {
+      return c.json({ error: "No lead name detected" }, 400);
+    }
+
+    const result = await c.env.DB.prepare(
+      `INSERT INTO leads (name, company, title, phone, email, product_interest,
+                          estimated_value, status, summary, raw_transcript, language)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'New', ?, ?, ?)
+       RETURNING *`
+    )
+      .bind(
+        parsed.name,
+        parsed.company || "",
+        parsed.title || "",
+        parsed.phone || "",
+        parsed.email || "",
+        parsed.product_interest || "",
+        typeof parsed.estimated_value === "number" ? parsed.estimated_value : null,
+        parsed.summary || "",
+        text,
+        language || "en-US"
+      )
+      .first();
+
+    return c.json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return c.json({ error: message }, 500);
+  }
+});
+
+// List leads with optional status filter
+app.get("/api/leads", async (c) => {
+  const status = c.req.query("status");
+
+  let stmt;
+  if (status && status !== "all") {
+    stmt = c.env.DB.prepare(
+      "SELECT * FROM leads WHERE status = ? ORDER BY created_at DESC"
+    ).bind(status);
+  } else {
+    stmt = c.env.DB.prepare("SELECT * FROM leads ORDER BY created_at DESC");
+  }
+
+  const { results } = await stmt.all();
+  return c.json(results);
+});
+
+// Update a lead's status (and only status — keeping the demo minimal)
+app.patch("/api/leads/:id", async (c) => {
+  const id = c.req.param("id");
+  const { status } = await c.req.json<{ status: string }>();
+  if (!status) return c.json({ error: "status is required" }, 400);
+
+  const row = await c.env.DB.prepare(
+    "UPDATE leads SET status = ? WHERE id = ? RETURNING *"
+  )
+    .bind(status, id)
+    .first();
+  return c.json(row);
+});
+
+// Delete a lead
+app.delete("/api/leads/:id", async (c) => {
+  const id = c.req.param("id");
+  await c.env.DB.prepare("DELETE FROM leads WHERE id = ?").bind(id).run();
+  return c.json({ ok: true });
+});
+
 export default app;

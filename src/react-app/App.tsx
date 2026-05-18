@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import LandingPage from "./components/LandingPage";
 import AssistantPage from "./components/AssistantPage";
 import AgentsPage from "./components/AgentsPage";
+import CRMPage from "./components/CRMPage";
 import "./App.css";
 
 function App() {
@@ -19,6 +20,10 @@ function App() {
 
   if (page === "/agents") {
     return <AgentsPage />;
+  }
+
+  if (page === "/crm") {
+    return <CRMPage />;
   }
 
   return <LandingPage />;

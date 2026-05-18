@@ -52,3 +52,36 @@ export const CATEGORIES: Record<
 };
 
 export const ALL_CATEGORIES = Object.keys(CATEGORIES) as EntryCategory[];
+
+/* ── CRM: Leads ── */
+
+export type LeadStatus =
+  | "New"
+  | "Contacted"
+  | "Qualified"
+  | "Not Qualified"
+  | "Converted";
+
+export interface Lead {
+  id: number;
+  name: string;
+  company: string;
+  title: string;
+  phone: string;
+  email: string;
+  product_interest: string;
+  estimated_value: number | null;
+  status: LeadStatus;
+  summary: string;
+  raw_transcript: string;
+  language: string;
+  created_at: string;
+}
+
+export const LEAD_STATUSES: { key: LeadStatus; color: string; bg: string }[] = [
+  { key: "New",           color: "#6366f1", bg: "#eef2ff" },
+  { key: "Contacted",     color: "#0ea5e9", bg: "#e0f2fe" },
+  { key: "Qualified",     color: "#10b981", bg: "#ecfdf5" },
+  { key: "Not Qualified", color: "#94a3b8", bg: "#f1f5f9" },
+  { key: "Converted",     color: "#f59e0b", bg: "#fffbeb" },
+];
