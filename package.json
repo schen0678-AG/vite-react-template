@@ -13,9 +13,13 @@
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.90.0",
+		"@radix-ui/react-dialog": "^1.1.15",
+		"@tailwindcss/vite": "^4.3.0",
 		"hono": "4.11.1",
+		"lucide-react": "^0.469.0",
 		"react": "19.2.1",
-		"react-dom": "19.2.1"
+		"react-dom": "19.2.1",
+		"tailwindcss": "^4.3.0"
 	},
 	"devDependencies": {
 		"@cloudflare/vite-plugin": "1.15.3",

@@ -3,6 +3,16 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const app = new Hono<{ Bindings: Env }>();
 
+// SPA fallback: any non-/api path that doesn't match a route falls through to
+// the static asset handler, which serves index.html for unknown paths thanks
+// to `not_found_handling: "single-page-application"` in wrangler.json.
+app.notFound((c) => {
+  if (c.req.path.startsWith("/api/")) {
+    return c.json({ error: "Not found" }, 404);
+  }
+  return c.env.ASSETS.fetch(c.req.raw);
+});
+
 app.get("/api/", (c) => c.json({ name: "Agenlytics Assistant" }));
 
 // Transcribe audio via OpenAI Whisper — restricted to English + Simplified Chinese

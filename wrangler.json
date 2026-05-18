@@ -10,12 +10,13 @@
 	"upload_source_maps": true,
 	"assets": {
 		"directory": "./dist/client",
+		"binding": "ASSETS",
 		"not_found_handling": "single-page-application"
 	},
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "assistant-db",
+			"database_name": "pa",
 			"database_id": "a7e31c33-af90-4e22-837e-0291ef5a01a9"
 		}
 	]
