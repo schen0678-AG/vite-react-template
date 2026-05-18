@@ -15,7 +15,6 @@ export default function LandingPage() {
             <a href="#use-cases">Use Cases</a>
             <a href="#contact">Contact</a>
             <a href="/crm">Voice CRM</a>
-            <a href="/dashboard">Dashboard</a>
             <a href="/assistant" className="nav-cta">Try Assistant</a>
           </div>
         </div>
@@ -30,7 +29,6 @@ export default function LandingPage() {
             <a href="#platform" className="btn-primary">See How It Works</a>
             <a href="/assistant" className="btn-secondary">Try the Assistant</a>
             <a href="/crm" className="btn-secondary">Try Voice CRM</a>
-            <a href="/dashboard" className="btn-secondary">Sales Dashboard</a>
           </div>
         </div>
       </section>
