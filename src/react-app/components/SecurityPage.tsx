@@ -176,14 +176,15 @@ export default function SecurityPage() {
         </div>
       </section>
 
-      {/* ── Nebulas AI Stack ── */}
+      {/* ── Production-proven Stack ── */}
       <section className="sec-stack-section">
         <div className="section-container">
           <div className="section-header">
-            <h2 className="sec-stack-title">The same stack powering Nebulas AI</h2>
+            <h2 className="sec-stack-title">Production-proven security stack</h2>
             <p className="sec-stack-sub">
               This isn&apos;t a prototype. It&apos;s the same security
-              architecture our sister product Nebulas AI runs in production.
+              architecture already running in production at a wholesale company
+              with tens of millions in annual sales revenue.
             </p>
           </div>
 
