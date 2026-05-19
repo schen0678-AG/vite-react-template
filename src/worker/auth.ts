@@ -23,7 +23,7 @@ export interface GoogleUser {
 export type AuthedVars = { user: GoogleUser };
 
 // Routes that should remain public (no Authorization header required).
-function isPublic(method: string, path: string): boolean {
+function isPublic(path: string): boolean {
   if (path === "/api/" || path === "/api") return true; // health probe
   return false;
 }
@@ -48,7 +48,7 @@ export function googleAuth(): MiddlewareHandler<{
 }> {
   return async (c, next) => {
     if (!c.req.path.startsWith("/api/")) return next();
-    if (isPublic(c.req.method, c.req.path)) return next();
+    if (isPublic(c.req.path)) return next();
 
     const clientId = c.env.GOOGLE_CLIENT_ID;
     if (!clientId) {
