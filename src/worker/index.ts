@@ -1,7 +1,12 @@
 import { Hono } from "hono";
 import Anthropic from "@anthropic-ai/sdk";
+import { googleAuth, type AuthedVars } from "./auth";
 
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Env; Variables: AuthedVars }>();
+
+// Verify Google ID tokens on every /api/* request (except the public health
+// probe — see worker/auth.ts). Protected handlers can read c.get("user").
+app.use("/api/*", googleAuth());
 
 // SPA fallback: any non-/api path that doesn't match a route falls through to
 // the static asset handler, which serves index.html for unknown paths thanks
@@ -14,6 +19,11 @@ app.notFound((c) => {
 });
 
 app.get("/api/", (c) => c.json({ name: "Agenlytics Assistant" }));
+
+// Returns the current authed user. The /api/* middleware has already verified
+// the token + allowlist by the time we get here, so this is a 200 / 401 / 403
+// probe the frontend calls right after sign-in to confirm access.
+app.get("/api/auth/me", (c) => c.json(c.get("user")));
 
 // Transcribe audio via OpenAI Whisper — restricted to English + Simplified Chinese
 app.post("/api/transcribe", async (c) => {
