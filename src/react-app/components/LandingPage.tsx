@@ -1,6 +1,27 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useAuth, GoogleSignInButton } from "../auth";
 
 export default function LandingPage() {
+  const { user, signOut, authError } = useAuth();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  // After sign-in succeeds *and* the server allowlist accepts, navigate to the
+  // page the user was trying to reach. If the server rejects, authError is set
+  // and we keep them on the landing page so they can see the message.
+  useEffect(() => {
+    if (user && !authError && pendingHref) {
+      const href = pendingHref;
+      setPendingHref(null);
+      window.location.href = href;
+    }
+  }, [user, authError, pendingHref]);
+
+  const guard = (href: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (user) return; // signed in → let the link navigate
+    e.preventDefault();
+    setPendingHref(href);
+  };
+
   return (
     <div className="landing">
       <nav className="nav">
@@ -12,8 +33,27 @@ export default function LandingPage() {
           <div className="nav-links">
             <a href="#platform">Data &amp; Agent Fusion Platform</a>
             <a href="/agents">Meet the Agent Team</a>
-            <a href="/crm">Try Voice CRM</a>
-            <a href="/assistant" className="nav-cta">Try Personal Assistant</a>
+            <a href="/security">Security</a>
+            <a href="/crm" onClick={guard("/crm")}>Try Voice CRM</a>
+            <a href="/assistant" onClick={guard("/assistant")} className="nav-cta">
+              Try Personal Assistant
+            </a>
+            {user ? (
+              <span className="nav-user" title={user.email}>
+                {user.picture && (
+                  <img
+                    src={user.picture}
+                    alt=""
+                    className="nav-user-avatar"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
+                <span className="nav-user-name">{user.name.split(" ")[0]}</span>
+                <button className="nav-user-signout" onClick={signOut}>
+                  Sign out
+                </button>
+              </span>
+            ) : null}
           </div>
         </div>
       </nav>
@@ -25,8 +65,8 @@ export default function LandingPage() {
           <p className="hero-subtitle">We fuse autonomous AI agents with a unified data platform. Your systems feed the data. Our agents deliver the action.</p>
           <div className="hero-actions">
             <a href="#platform" className="btn-primary">See How It Works</a>
-            <a href="/assistant" className="btn-secondary">Try the Assistant</a>
-            <a href="/crm" className="btn-secondary">Try Voice CRM</a>
+            <a href="/assistant" onClick={guard("/assistant")} className="btn-secondary">Try the Assistant</a>
+            <a href="/crm" onClick={guard("/crm")} className="btn-secondary">Try Voice CRM</a>
           </div>
         </div>
       </section>
@@ -36,15 +76,15 @@ export default function LandingPage() {
       </section>
 
       {/* Security assurance */}
-      <section className="security-bar">
+      <a href="/security" className="security-bar security-bar-link">
         <div className="security-inner">
           <div className="security-icon">🔒</div>
           <div className="security-text">
             <strong>Your data stays within your own IT landscape.</strong>
-            <span>All processing happens inside your infrastructure. No data is sent to external servers. Full encryption, SSO, role-based access, and audit trails by default.</span>
+            <span>All processing happens inside your infrastructure. No data is sent to external servers. Full encryption, SSO, role-based access, and audit trails by default. <em>Read the full security overview →</em></span>
           </div>
         </div>
-      </section>
+      </a>
 
       <section className="unlock-section" id="use-cases">
         <div className="section-container">
@@ -65,7 +105,7 @@ export default function LandingPage() {
             <p>Book a call or try the live assistant &mdash; built on the same platform.</p>
             <div className="hero-actions">
               <a href="mailto:hello@agenlytics.ai" className="btn-primary">Get in Touch</a>
-              <a href="/assistant" className="btn-secondary">Try the Assistant</a>
+              <a href="/assistant" onClick={guard("/assistant")} className="btn-secondary">Try the Assistant</a>
             </div>
           </div>
         </div>
@@ -79,6 +119,61 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {pendingHref && (
+        <SignInModal
+          destination={pendingHref}
+          authError={authError}
+          onClose={() => setPendingHref(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function SignInModal({
+  destination,
+  authError,
+  onClose,
+}: {
+  destination: string;
+  authError: string | null;
+  onClose: () => void;
+}) {
+  const label =
+    destination === "/assistant"
+      ? "Personal Assistant"
+      : destination === "/crm"
+        ? "Voice CRM"
+        : destination === "/dashboard"
+          ? "Dashboard"
+          : "this use case";
+
+  return (
+    <div className="signin-modal-backdrop" onClick={onClose}>
+      <div className="signin-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="signin-modal-close" onClick={onClose} aria-label="Close">
+          &times;
+        </button>
+        {authError ? (
+          <>
+            <h3>Account not authorized</h3>
+            <p className="auth-error">{authError}</p>
+            <p>Sign in with a different Google account to continue.</p>
+          </>
+        ) : (
+          <>
+            <h3>Sign in to try {label}</h3>
+            <p>We use Google sign-in — no password to remember.</p>
+          </>
+        )}
+        <div className="signin-modal-button">
+          <GoogleSignInButton text="continue_with" size="large" />
+        </div>
+        <p className="signin-modal-fine">
+          By continuing you agree to let Agenlytics Labs see your basic profile info (name, email).
+        </p>
+      </div>
     </div>
   );
 }

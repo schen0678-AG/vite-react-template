@@ -3,6 +3,8 @@ import LandingPage from "./components/LandingPage";
 import AssistantPage from "./components/AssistantPage";
 import AgentsPage from "./components/AgentsPage";
 import CRMPage from "./components/CRMPage";
+import SecurityPage from "./components/SecurityPage";
+import RequireAuth from "./components/RequireAuth";
 import "./App.css";
 
 function App() {
@@ -15,19 +17,35 @@ function App() {
   }, []);
 
   if (page === "/assistant") {
-    return <AssistantPage />;
+    return (
+      <RequireAuth label="Personal Assistant">
+        <AssistantPage />
+      </RequireAuth>
+    );
   }
 
   if (page === "/agents") {
     return <AgentsPage />;
   }
 
+  if (page === "/security") {
+    return <SecurityPage />;
+  }
+
   if (page === "/crm") {
-    return <CRMPage />;
+    return (
+      <RequireAuth label="Voice CRM">
+        <CRMPage />
+      </RequireAuth>
+    );
   }
 
   if (page === "/dashboard") {
-    return <CRMPage initialTab="dashboard" />;
+    return (
+      <RequireAuth label="Dashboard">
+        <CRMPage initialTab="dashboard" />
+      </RequireAuth>
+    );
   }
 
   return <LandingPage />;
