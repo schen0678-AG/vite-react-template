@@ -4,26 +4,14 @@ import type { Agent } from "./agents/agentData";
 import AgentCard from "./agents/AgentCard";
 import TeamSection from "./agents/TeamSection";
 import AgentDetailDialog from "./agents/AgentDetailDialog";
+import NavBar from "./NavBar";
 
 export default function AgentsPage() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   return (
     <div className="agents-page">
-      {/* Nav (matches the template's existing nav styling) */}
-      <nav className="nav">
-        <div className="nav-container">
-          <a href="/" className="nav-logo">
-            <span className="logo-icon">A</span>
-            <span className="logo-text">Agenlytics Labs</span>
-          </a>
-          <div className="nav-links">
-            <a href="/">Home</a>
-            <a href="/#platform">Platform</a>
-            <a href="/assistant" className="nav-cta">Try Assistant</a>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="p-6 pb-12">
         {/* Header */}

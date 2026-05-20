@@ -1,62 +1,12 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { useAuth, GoogleSignInButton } from "../auth";
+import { useEffect, useRef } from "react";
+import NavBar, { useGuardedNav } from "./NavBar";
 
 export default function LandingPage() {
-  const { user, signOut, authError } = useAuth();
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
-
-  // After sign-in succeeds *and* the server allowlist accepts, navigate to the
-  // page the user was trying to reach. If the server rejects, authError is set
-  // and we keep them on the landing page so they can see the message.
-  useEffect(() => {
-    if (user && !authError && pendingHref) {
-      const href = pendingHref;
-      setPendingHref(null);
-      window.location.href = href;
-    }
-  }, [user, authError, pendingHref]);
-
-  const guard = (href: string) => (e: MouseEvent<HTMLAnchorElement>) => {
-    if (user) return; // signed in → let the link navigate
-    e.preventDefault();
-    setPendingHref(href);
-  };
+  const { guard, modal } = useGuardedNav();
 
   return (
     <div className="landing">
-      <nav className="nav">
-        <div className="nav-container">
-          <a href="/" className="nav-logo">
-            <span className="logo-icon">A</span>
-            <span className="logo-text">Agenlytics Labs</span>
-          </a>
-          <div className="nav-links">
-            <a href="#platform">Data &amp; Agent Fusion Platform</a>
-            <a href="/agents">Meet the Agent Team</a>
-            <a href="/security">Security</a>
-            <a href="/crm" onClick={guard("/crm")}>Try Voice CRM</a>
-            <a href="/assistant" onClick={guard("/assistant")} className="nav-cta">
-              Try Personal Assistant
-            </a>
-            {user ? (
-              <span className="nav-user" title={user.email}>
-                {user.picture && (
-                  <img
-                    src={user.picture}
-                    alt=""
-                    className="nav-user-avatar"
-                    referrerPolicy="no-referrer"
-                  />
-                )}
-                <span className="nav-user-name">{user.name.split(" ")[0]}</span>
-                <button className="nav-user-signout" onClick={signOut}>
-                  Sign out
-                </button>
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       <section className="hero">
         <div className="hero-container">
@@ -120,60 +70,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {pendingHref && (
-        <SignInModal
-          destination={pendingHref}
-          authError={authError}
-          onClose={() => setPendingHref(null)}
-        />
-      )}
-    </div>
-  );
-}
-
-function SignInModal({
-  destination,
-  authError,
-  onClose,
-}: {
-  destination: string;
-  authError: string | null;
-  onClose: () => void;
-}) {
-  const label =
-    destination === "/assistant"
-      ? "Personal Assistant"
-      : destination === "/crm"
-        ? "Voice CRM"
-        : destination === "/dashboard"
-          ? "Dashboard"
-          : "this use case";
-
-  return (
-    <div className="signin-modal-backdrop" onClick={onClose}>
-      <div className="signin-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="signin-modal-close" onClick={onClose} aria-label="Close">
-          &times;
-        </button>
-        {authError ? (
-          <>
-            <h3>Account not authorized</h3>
-            <p className="auth-error">{authError}</p>
-            <p>Sign in with a different Google account to continue.</p>
-          </>
-        ) : (
-          <>
-            <h3>Sign in to try {label}</h3>
-            <p>We use Google sign-in — no password to remember.</p>
-          </>
-        )}
-        <div className="signin-modal-button">
-          <GoogleSignInButton text="continue_with" size="large" />
-        </div>
-        <p className="signin-modal-fine">
-          By continuing you agree to let Agenlytics Labs see your basic profile info (name, email).
-        </p>
-      </div>
+      {modal}
     </div>
   );
 }

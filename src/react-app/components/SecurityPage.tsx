@@ -1,20 +1,9 @@
+import NavBar from "./NavBar";
+
 export default function SecurityPage() {
   return (
     <div className="landing">
-      <nav className="nav">
-        <div className="nav-container">
-          <a href="/" className="nav-logo">
-            <span className="logo-icon">A</span>
-            <span className="logo-text">Agenlytics Labs</span>
-          </a>
-          <div className="nav-links">
-            <a href="/#platform">Platform</a>
-            <a href="/agents">Meet the Agent Team</a>
-            <a href="/security">Security</a>
-            <a href="/assistant" className="nav-cta">Try Personal Assistant</a>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       {/* ── Hero ── */}
       <section className="hero sec-hero">
