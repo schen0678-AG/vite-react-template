@@ -1,15 +1,45 @@
-CREATE TABLE IF NOT EXISTS entries (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  text TEXT NOT NULL,
-  language TEXT NOT NULL DEFAULT 'en-US',
-  category TEXT NOT NULL,
-  title TEXT NOT NULL DEFAULT '',
-  feedback TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+-- Personal Assistant: per-user workspace of projects, features, and todos.
+-- Replaces the old single-tenant `entries` table.
 
-CREATE INDEX IF NOT EXISTS idx_entries_category ON entries(category);
-CREATE INDEX IF NOT EXISTS idx_entries_created_at ON entries(created_at);
+DROP TABLE IF EXISTS entries;
+DROP INDEX IF EXISTS idx_entries_category;
+DROP INDEX IF EXISTS idx_entries_created_at;
+
+CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,                                   -- Google `sub` from the verified ID token
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  language TEXT NOT NULL DEFAULT 'en-US',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS features (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  summary TEXT NOT NULL,
+  details TEXT NOT NULL DEFAULT '[]',                      -- JSON array of bullet strings
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_features_user_project ON features(user_id, project_id);
+
+CREATE TABLE IF NOT EXISTS todos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  due_at TEXT,                                             -- ISO 8601 datetime, or NULL for undated
+  action TEXT NOT NULL,
+  target TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending',                  -- 'pending' | 'done' | 'cancelled'
+  project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_todos_user_due ON todos(user_id, status, due_at);
 
 -- CRM: minimal lead capture (voice/text → Claude → leads)
 CREATE TABLE IF NOT EXISTS leads (

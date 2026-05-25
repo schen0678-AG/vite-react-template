@@ -1,57 +1,59 @@
-export interface Entry {
+/* \u2500\u2500 Personal Assistant: projects, features, todos \u2500\u2500 */
+
+export interface AssistantFeature {
   id: number;
-  text: string;
-  language: string;
-  category: EntryCategory;
-  title: string;
-  feedback: string;
-  created_at: string;
+  project_id: number;
+  summary: string;
+  details: string[];
+  updated_at: string;
 }
 
-export type EntryCategory =
-  | "feature_request"
-  | "bug_report"
-  | "personal_planning"
-  | "work_task"
-  | "idea_note";
+export interface AssistantProject {
+  id: number;
+  name: string;
+  description: string;
+  language: string;
+  features: AssistantFeature[];
+  created_at: string;
+  updated_at: string;
+}
 
-export const CATEGORIES: Record<
-  EntryCategory,
-  { en: string; zh: string; color: string; bg: string }
-> = {
-  feature_request: {
-    en: "Feature Request",
-    zh: "\u529F\u80FD\u9700\u6C42",
-    color: "#6366f1",
-    bg: "#eef2ff",
-  },
-  bug_report: {
-    en: "Bug Report",
-    zh: "\u95EE\u9898\u62A5\u544A",
-    color: "#ef4444",
-    bg: "#fef2f2",
-  },
-  personal_planning: {
-    en: "Personal Planning",
-    zh: "\u4E2A\u4EBA\u89C4\u5212",
-    color: "#10b981",
-    bg: "#ecfdf5",
-  },
-  work_task: {
-    en: "Work Task",
-    zh: "\u5DE5\u4F5C\u4EFB\u52A1",
-    color: "#f59e0b",
-    bg: "#fffbeb",
-  },
-  idea_note: {
-    en: "Idea / Note",
-    zh: "\u60F3\u6CD5/\u7B14\u8BB0",
-    color: "#8b5cf6",
-    bg: "#f5f3ff",
-  },
-};
+export type TodoStatus = "pending" | "done" | "cancelled";
 
-export const ALL_CATEGORIES = Object.keys(CATEGORIES) as EntryCategory[];
+export interface AssistantTodo {
+  id: number;
+  due_at: string | null;
+  action: string;
+  target: string;
+  notes: string;
+  status: TodoStatus;
+  project_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AssistantState {
+  projects: AssistantProject[];
+  todos: AssistantTodo[];
+}
+
+export type AssistantOp =
+  | { kind: "project_created"; id: number; name: string }
+  | { kind: "project_updated"; id: number; name: string }
+  | { kind: "project_deleted"; id: number; name: string }
+  | { kind: "feature_created"; id: number; project_id: number; summary: string; project_name: string }
+  | { kind: "feature_updated"; id: number; project_id: number; summary: string }
+  | { kind: "feature_deleted"; id: number; summary: string }
+  | { kind: "todo_created"; id: number; action: string; due_at: string | null }
+  | { kind: "todo_updated"; id: number; action: string }
+  | { kind: "todo_completed"; id: number; action: string }
+  | { kind: "todo_deleted"; id: number; action: string };
+
+export interface AssistantTurnResult {
+  ops: AssistantOp[];
+  reply: string;
+  state: AssistantState;
+}
 
 /* ── CRM: Leads ── */
 

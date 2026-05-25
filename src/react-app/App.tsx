@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import LandingPage from "./components/LandingPage";
-import AssistantPage from "./components/AssistantPage";
+import AssistantPage from "./components/assistant/AssistantPage";
 import AgentsPage from "./components/AgentsPage";
 import CRMPage from "./components/CRMPage";
 import SecurityPage from "./components/SecurityPage";
