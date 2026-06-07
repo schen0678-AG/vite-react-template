@@ -34,17 +34,20 @@ app.post("/api/transcribe", async (c) => {
   if (!audio) {
     return c.json({ error: "No audio file provided" }, 400);
   }
+  if (audio.size < 2 * 1024) {
+    // Recordings under ~2 KB are essentially silence. Skip the API call —
+    // Whisper would just emit subtitle-credit filler and waste budget.
+    return c.json({ text: "", language: "en-US" });
+  }
 
-  // Forward to OpenAI Whisper API
   const whisperForm = new FormData();
   whisperForm.append("file", audio, "audio.webm");
   whisperForm.append("model", "whisper-1");
-  // Restrict to English and Chinese (simplified) only
-  whisperForm.append("language", ""); // let Whisper auto-detect between en/zh
-  whisperForm.append(
-    "prompt",
-    "This audio is in either English or Simplified Chinese (简体中文). Transcribe exactly as spoken."
-  );
+  // No `prompt` — biasing toward "English or Chinese" pushes Whisper to emit
+  // Chinese subtitle hallucinations on silent audio. Language stays empty so
+  // Whisper detects from the actual content.
+  whisperForm.append("language", "");
+  whisperForm.append("temperature", "0");
 
   try {
     const res = await fetch(
@@ -64,17 +67,36 @@ app.post("/api/transcribe", async (c) => {
     }
 
     const result = (await res.json()) as { text: string };
+    const cleaned = stripWhisperHallucinations(result.text);
 
-    // Detect language from transcribed text
     const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf]/;
-    const language = cjkRegex.test(result.text) ? "zh-CN" : "en-US";
+    const language = cjkRegex.test(cleaned) ? "zh-CN" : "en-US";
 
-    return c.json({ text: result.text, language });
+    return c.json({ text: cleaned, language });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return c.json({ error: message }, 500);
   }
 });
+
+// Whisper's stock hallucinations: training-set captions/credits that surface
+// when the audio is silent. Strip them so the user doesn't see "字幕提供"
+// or "Thanks for watching" in their assistant prompt.
+const WHISPER_HALLUCINATIONS = [
+  /字幕(?:由[^\s。]*提供|提供|志愿者)[^\s。]*/g,
+  /中文字幕[^\s。]*/g,
+  /字幕组[^\s。]*/g,
+  /MING\s*Pao/gi,
+  /thanks?\s+for\s+watching\.?/gi,
+  /please\s+subscribe[^.]*\.?/gi,
+  /subscribe\s+to\s+my\s+channel\.?/gi,
+];
+function stripWhisperHallucinations(raw: string): string {
+  let text = raw;
+  for (const re of WHISPER_HALLUCINATIONS) text = text.replace(re, "");
+  text = text.replace(/\s+/g, " ").trim();
+  return text.length < 2 ? "" : text;
+}
 
 /* ── Personal Assistant: smart projects/features/todos agent ── */
 

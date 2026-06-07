@@ -29,7 +29,11 @@ export default function AssistantInput({ onSubmit, busy }: Props) {
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        if (blob.size === 0) return;
+        // Skip clearly-empty recordings client-side too (saves a roundtrip).
+        if (blob.size < 2 * 1024) {
+          alert("Didn't catch anything — try recording for a bit longer.");
+          return;
+        }
         setIsTranscribing(true);
         try {
           const form = new FormData();
@@ -41,7 +45,12 @@ export default function AssistantInput({ onSubmit, busy }: Props) {
             return;
           }
           const data = (await res.json()) as { text: string };
-          setText((prev) => (prev ? prev + " " + data.text : data.text));
+          const transcribed = data.text.trim();
+          if (!transcribed) {
+            alert("Couldn't transcribe — the audio was silent or too quiet.");
+            return;
+          }
+          setText((prev) => (prev ? prev + " " + transcribed : transcribed));
         } catch {
           alert("Failed to transcribe audio");
         } finally {
