@@ -50,6 +50,7 @@ export default function NavBar() {
             <a href="/#platform">Data &amp; Agent Fusion Platform</a>
             <a href="/agents">Meet the Agent Team</a>
             <a href="/security">Security</a>
+            <a href="/piano">Piano Practice</a>
             <a href="/crm" onClick={guard("/crm")}>Try Voice CRM</a>
             <a href="/assistant" onClick={guard("/assistant")} className="nav-cta">
               Try Personal Assistant

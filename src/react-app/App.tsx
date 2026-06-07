@@ -4,6 +4,7 @@ import AssistantPage from "./components/assistant/AssistantPage";
 import AgentsPage from "./components/AgentsPage";
 import CRMPage from "./components/CRMPage";
 import SecurityPage from "./components/SecurityPage";
+import PianoAgentPage from "./components/piano/PianoAgentPage";
 import RequireAuth from "./components/RequireAuth";
 import "./App.css";
 
@@ -30,6 +31,10 @@ function App() {
 
   if (page === "/security") {
     return <SecurityPage />;
+  }
+
+  if (page === "/piano") {
+    return <PianoAgentPage />;
   }
 
   if (page === "/crm") {
