@@ -4,8 +4,11 @@
 // bright bins above a quiet floor) in the 80-2200 Hz fundamental range, with
 // the peak energy >= ~4x the mean. Voice has flatter formant bands and
 // silence has near-zero energy. Each 100ms tick we score "tonal? yes/no";
-// when 5 of the last 8 ticks are tonal we treat it as playing and the
-// countdown ticks down.
+// when 5 of the last 8 ticks are tonal we lock onto playing.
+//
+// Once locked, the timer keeps running for GRACE_MS (10s) — natural pauses
+// between phrases shouldn't freeze the countdown. Any piano detected during
+// the grace window extends it. After 10s with no piano, the timer pauses.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import NavBar from "../NavBar";
@@ -13,7 +16,8 @@ import NavBar from "../NavBar";
 const FFT_SIZE = 2048;
 const TICK_MS = 100;
 const RECENT = 8;          // sliding window length (≈ 800ms)
-const NEED_TONAL = 5;      // need 5/8 tonal ticks to be "playing"
+const NEED_TONAL = 5;      // need 5/8 tonal ticks to (re)lock onto piano
+const GRACE_MS = 10_000;   // keep counting for 10s after last piano hit
 const SILENCE_AVG = 6;     // below this average bin value → silence
 const PEAK_TO_AVG = 4;     // peak/mean ratio that separates piano from voice
 const MIN_PEAK_HZ = 80;
@@ -34,6 +38,7 @@ export default function PianoAgentPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const recentRef = useRef<boolean[]>([]);
   const lastTickRef = useRef<number>(0);
+  const lastPianoAtRef = useRef<number>(0);  // performance.now() of last "playing" detection
 
   // Reset remaining time whenever target changes (unless already running).
   useEffect(() => {
@@ -48,6 +53,7 @@ export default function PianoAgentPage() {
     analyserRef.current = null;
     recentRef.current = [];
     lastTickRef.current = 0;
+    lastPianoAtRef.current = 0;
     setRunning(false);
     setStatus((s) => (s === "done" ? "done" : "idle"));
   }, []);
@@ -73,6 +79,7 @@ export default function PianoAgentPage() {
       analyserRef.current = analyser;
       recentRef.current = [];
       lastTickRef.current = 0;
+      lastPianoAtRef.current = 0;
       setRunning(true);
       setStatus("paused");
     } catch {
@@ -119,12 +126,16 @@ export default function PianoAgentPage() {
       recent.push(tonal);
       if (recent.length > RECENT) recent.shift();
       const tonalCount = recent.reduce((n, t) => (t ? n + 1 : n), 0);
-      const playing = tonalCount >= NEED_TONAL;
 
-      setStatus(playing ? "playing" : "paused");
+      // Lock onto piano when the sliding window confirms it. Once locked,
+      // we trust the next GRACE_MS even if the kid pauses between notes.
+      const now = performance.now();
+      if (tonalCount >= NEED_TONAL) lastPianoAtRef.current = now;
+      const inGrace = lastPianoAtRef.current > 0 && now - lastPianoAtRef.current < GRACE_MS;
 
-      if (playing) {
-        const now = performance.now();
+      setStatus(inGrace ? "playing" : "paused");
+
+      if (inGrace) {
         const elapsed = lastTickRef.current ? now - lastTickRef.current : TICK_MS;
         lastTickRef.current = now;
         setRemainingMs((prev) => Math.max(0, prev - elapsed));
